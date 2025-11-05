@@ -9,6 +9,9 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+
+const TagsController = () => import('#controllers/tags_controller')
+
 const PostsController = () => import('#controllers/posts_controller')
 
 const CategoriesController = () => import('#controllers/categories_controller')
@@ -22,6 +25,7 @@ router
 
     router.resource('categories', CategoriesController).only(['index', 'show'])
     router.resource('posts', PostsController).only(['index', 'show'])
+    router.resource('tags', TagsController).only(['index', 'show'])
 
     router
       .group(() => {

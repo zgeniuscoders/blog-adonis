@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasOne } from '@adonisjs/lucid/orm'
+import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import User from '#models/user'
 import * as relations from '@adonisjs/lucid/types/relations'
 
@@ -13,8 +13,8 @@ export default class Profile extends BaseModel {
   @column()
   declare profileUrl: string
 
-  @hasOne(() => User)
-  declare user: relations.HasOne<typeof User>
+  @belongsTo(() => User)
+  declare user: relations.BelongsTo<typeof User>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

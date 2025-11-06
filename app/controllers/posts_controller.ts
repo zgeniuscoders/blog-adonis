@@ -4,6 +4,7 @@ import { addPostValidator, updatePostValidator } from '#validators/post'
 import Tag from '#models/tag'
 import { FileUploadService } from '#services/file_upload_service'
 import { inject } from '@adonisjs/core'
+import { editOrDeletePost } from '#abilities/main'
 
 @inject()
 export default class PostsController {
@@ -50,28 +51,39 @@ export default class PostsController {
     return response.noContent()
   }
 
-  async update({ response, request, params }: HttpContext) {
+  async update({ bouncer, response, request, params }: HttpContext) {
     const data = await request.validateUsing(updatePostValidator)
     const postId = params.id
 
-    if (data.imageUrl) {
-      const file = await this.fileUploadService.upload('posts', data.imageUrl)
-      const newData = {
-        ...data,
-        imageUrl: file,
+    const post = await Post.findOrFail(postId)
+
+    if (await bouncer.allows(editOrDeletePost, post)) {
+      if (data.imageUrl) {
+        const file = await this.fileUploadService.upload('posts', data.imageUrl)
+        const newData = {
+          ...data,
+          imageUrl: file,
+        }
+        await Post.query().where({ id: postId }).update(newData)
+        return response.noContent()
       }
-      await Post.query().where({ id: postId }).update(newData)
+
+      await Post.query().where({ id: postId }).update(data)
       return response.noContent()
     }
 
-    await Post.query().where({ id: postId }).update(data)
-    return response.noContent()
+    return response.forbidden({ message: "Vous n'êtes pas authoriser a modifier cette post" })
   }
 
-  async destroy({ response, params }: HttpContext) {
+  async destroy({ response, params, bouncer }: HttpContext) {
     const postId = params.id
     const post = await Post.findOrFail(postId)
-    await post.delete()
-    return response.noContent()
+
+    if (await bouncer.allows(editOrDeletePost, post)) {
+      await post.delete()
+      return response.noContent()
+    }
+
+    return response.forbidden({ message: "Vous n'êtes pas authoriser a supprimer cette post" })
   }
 }
